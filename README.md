@@ -4,6 +4,7 @@ Tinder-style web app for dog owners: find a **forever home**, a **foster family*
 
 Final project for **Internet Technologies — RUNI CS 2026**.
 
+- **Repository**: https://github.com/Omerpoj/tindog
 - **Live app**: _add Vercel URL after deployment_
 - **Stack**: Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 + shadcn/ui · Supabase (Postgres, Auth, Storage, Realtime) · Vercel
 
