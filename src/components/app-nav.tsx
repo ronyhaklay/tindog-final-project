@@ -33,7 +33,7 @@ export function AppNav({ role, pendingCount, newMatchCount, shelterName }: { rol
   return (
     <header className="sticky top-0 z-40 border-b border-white/70 bg-white/82 shadow-sm shadow-rose-100/30 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-2.5">
-        <Link href={role === "shelter_admin" ? "/shelter" : "/swipe"} className="flex shrink-0 items-center gap-2 rounded-xl px-2 transition-opacity hover:opacity-80" href="/">
+        <Link href="/" className="flex shrink-0 items-center gap-2 rounded-xl px-2 transition-opacity hover:opacity-80">
           <Image src="/logo.png" alt="TinDog" width={34} height={34} className="rounded-xl shadow-sm" />
           <div className="hidden sm:block">
             <div className="text-lg font-extrabold leading-none tracking-tight">tin<span className="text-primary">dog</span></div>

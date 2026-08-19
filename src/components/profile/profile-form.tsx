@@ -67,7 +67,7 @@ export function ProfileForm({ profile, email }: { profile: ExtendedProfile; emai
           <div className="flex flex-col gap-1.5"><Label htmlFor="city">{he ? "עיר מגורים *" : "City *"}</Label><Input id="city" name="city" defaultValue={profile.city ?? ""} placeholder={he ? "תל אביב" : "Tel Aviv"} minLength={2} required /></div>
           <div className="flex flex-col gap-1.5 sm:col-span-2">
             <Label htmlFor="accountMode">{he ? "מה מביא אותך ל-TinDog? *" : "Main goal *"}</Label>
-            <NativeSelect id="accountMode" name="accountMode" value={mode} onChange={(e) => setMode(e.target.value)} required>
+            <NativeSelect id="accountMode" name="accountMode" value={mode} onChange={(e) => setMode(e.target.value as "adopter" | "lister" | "both")} required>
               <option value="adopter">{he ? "אני רוצה לאמץ" : "I want to adopt"}</option>
               <option value="lister">{he ? "אני מעמותה" : "I represent a shelter"}</option>
               <option value="both">{he ? "שניהם" : "Both"}</option>
