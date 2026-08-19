@@ -128,3 +128,87 @@
     @apply font-sans;
   }
 }
+@layer base {
+  body {
+    background-image:
+      radial-gradient(circle at 10% 10%, color-mix(in oklch, var(--primary) 8%, transparent) 0, transparent 28rem),
+      radial-gradient(circle at 90% 80%, oklch(0.93 0.08 75 / 0.34) 0, transparent 30rem);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 22%, white);
+  }
+}
+
+@keyframes tindog-float {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-14px) rotate(calc(var(--r, 0deg) + 5deg)); }
+}
+
+@keyframes tindog-pop {
+  0% { transform: scale(.5) rotate(-8deg); opacity: 0; }
+  60% { transform: scale(1.06) rotate(2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.tindog-paw-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: .28;
+}
+
+.tindog-paw-bg::before,
+.tindog-paw-bg::after {
+  position: absolute;
+  content: "🐾  ·  🐶  ·  🦴  ·  🐾  ·  ♡  ·  🐶  ·  🐾";
+  white-space: nowrap;
+  font-size: 28px;
+  letter-spacing: 28px;
+  color: color-mix(in oklch, var(--primary) 30%, transparent);
+  filter: grayscale(.2);
+}
+
+.tindog-paw-bg::before { top: 14%; left: -8%; transform: rotate(-14deg); }
+.tindog-paw-bg::after { bottom: 10%; right: -12%; transform: rotate(12deg); opacity: .65; }
+
+.match-paw {
+  position: absolute;
+  z-index: 1;
+  font-size: clamp(28px, 5vw, 58px);
+  opacity: .22;
+  animation: tindog-float 4s ease-in-out infinite;
+}
+.match-paw.paw-a { --r: -16deg; left: 8%; top: 14%; }
+.match-paw.paw-b { --r: 18deg; right: 9%; top: 18%; animation-delay: .7s; }
+.match-paw.paw-c { --r: -8deg; left: 13%; bottom: 14%; animation-delay: 1.3s; }
+.match-paw.paw-d { --r: 20deg; right: 13%; bottom: 12%; animation-delay: .2s; }
+.match-paw.paw-e { --r: -10deg; left: 49%; top: 7%; animation-delay: 1s; }
+
+.fixed.z-\[100\] > .relative {
+  animation: tindog-pop .55s cubic-bezier(.2,.8,.2,1) both;
+}
+
+/* Hebrew mode: keep form controls and free text naturally aligned in RTL. */
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select {
+  text-align: right;
+}
+
+/* TinDog - Varela Round global typography */
+body,
+body *:not(code):not(pre) {
+  font-family: var(--font-varela-round), var(--font-geist-sans), Arial, sans-serif !important;
+}
+
+input,
+textarea,
+select,
+button {
+  font-family: var(--font-varela-round), var(--font-geist-sans), Arial, sans-serif !important;
+}
+/* End TinDog - Varela Round global typography */

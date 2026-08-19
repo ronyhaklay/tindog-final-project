@@ -1,4 +1,5 @@
 import type { DeckDog } from "./types";
+import type { Locale } from "./i18n";
 
 // Pure deck helpers - kept free of React/Supabase so they are easy
 // to unit test (see src/lib/__tests__/deck.test.ts).
@@ -28,11 +29,13 @@ export function shouldRefill(deck: DeckDog[], threshold = 3): boolean {
 }
 
 // "6 months" / "1 year" / "2.5 years"
-export function formatAge(ageYears: number): string {
+export function formatAge(ageYears: number, locale: Locale = "en"): string {
   if (ageYears < 1) {
     const months = Math.round(ageYears * 12);
+    if (locale === "he") return `${months} ${months === 1 ? "חודש" : "חודשים"}`;
     return `${months} month${months === 1 ? "" : "s"}`;
   }
   const rounded = Number.isInteger(ageYears) ? ageYears : ageYears.toFixed(1);
+  if (locale === "he") return `${rounded} ${ageYears === 1 ? "שנה" : "שנים"}`;
   return `${rounded} year${ageYears === 1 ? "" : "s"}`;
 }

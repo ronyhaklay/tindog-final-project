@@ -1,6 +1,11 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { DeckDog } from "@/lib/types";
+
+vi.mock("@/actions/favorites", () => ({
+  setFavorite: vi.fn(async () => ({ ok: true })),
+}));
+
 import { DogCard } from "../dog-card";
 
 const dog: DeckDog = {
@@ -18,8 +23,20 @@ const dog: DeckDog = {
   city: "Tel Aviv",
   is_active: true,
   created_at: new Date().toISOString(),
+  gender: "male",
+  good_with_kids: true,
+  good_with_dogs: true,
+  good_with_cats: false,
+  house_trained: true,
+  vaccinated: true,
+  neutered: true,
+  video_path: null,
+  bark_audio_path: null,
   photo_paths: [],
   owner_name: "Maya Levi",
+  shelter_name: "Lev Chai Rescue",
+  shelter_verified: false,
+  is_favorited: false,
 };
 
 describe("DogCard", () => {
@@ -35,7 +52,7 @@ describe("DogCard", () => {
     expect(
       screen.getByText("A very good boy looking for a home.")
     ).toBeInTheDocument();
-    expect(screen.getByText(/Published by Maya Levi/)).toBeInTheDocument();
+    expect(screen.getByText(/Lev Chai Rescue/)).toBeInTheDocument();
   });
 
   it("hides the carousel controls when there are no photos", () => {

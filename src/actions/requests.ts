@@ -3,11 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
-import { firstError, requestDecisionSchema } from "@/lib/validation";
+import { firstError, matchSeenSchema, requestDecisionSchema } from "@/lib/validation";
 
-// Approve or decline a pending request on one of my dogs.
-// RLS only lets the dog's owner update the row, so a forged
-// requestId from another user simply matches zero rows.
 export async function decideRequest(input: {
   requestId: string;
   decision: "approved" | "declined";
@@ -18,18 +15,51 @@ export async function decideRequest(input: {
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("match_requests")
-    .update({ status: parsed.data.decision })
-    .eq("id", parsed.data.requestId)
-    .eq("status", "pending")
-    .select("id");
 
-  if (error || !data || data.length === 0) {
-    return { ok: false, error: "Could not update this request." };
+  const { data, error } = await supabase.rpc("decide_match_request", {
+    p_request_id: parsed.data.requestId,
+    p_decision: parsed.data.decision,
+  });
+
+  if (error || !data) {
+    console.error("decide_match_request failed:", error);
+    return {
+      ok: false,
+      error:
+        parsed.data.decision === "approved"
+          ? "לא הצלחנו לפתוח את הצ׳אט. נסו שוב."
+          : "לא הצלחנו לעדכן את הבקשה.",
+    };
   }
 
   revalidatePath("/requests");
+  revalidatePath("/matches");
+  revalidatePath(`/matches/${parsed.data.requestId}`);
+  revalidatePath("/");
+
+  return { ok: true };
+}
+
+export async function markMatchSeen(
+  requestId: string,
+): Promise<ActionResult> {
+  const parsed = matchSeenSchema.safeParse({ requestId });
+  if (!parsed.success) {
+    return { ok: false, error: firstError(parsed.error) };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("mark_match_seen", {
+    p_request_id: parsed.data.requestId,
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      error: "Could not dismiss the match celebration.",
+    };
+  }
+
   revalidatePath("/matches");
   return { ok: true };
 }

@@ -1,11 +1,13 @@
 import type {
+  AccountMode,
+  DogExperience,
   DogSize,
   EnergyLevel,
+  HouseholdType,
   ListingType,
   RequestStatus,
+  UserRole,
 } from "./constants";
-
-// Row types mirroring the Supabase schema (supabase/migrations/0001_init.sql).
 
 export interface Profile {
   id: string;
@@ -13,6 +15,18 @@ export interface Profile {
   city: string | null;
   avatar_url: string | null;
   bio: string | null;
+  account_mode: AccountMode;
+  role: UserRole;
+  shelter_name: string | null;
+  shelter_about: string | null;
+  shelter_website: string | null;
+  shelter_verified: boolean;
+  household_type: HouseholdType | null;
+  has_children: boolean;
+  has_other_pets: boolean;
+  activity_level: EnergyLevel | null;
+  preferred_size: DogSize | null;
+  dog_experience: DogExperience | null;
   created_at: string;
 }
 
@@ -31,6 +45,15 @@ export interface Dog {
   city: string;
   is_active: boolean;
   created_at: string;
+  gender: "female" | "male" | null;
+  good_with_kids: boolean;
+  good_with_dogs: boolean;
+  good_with_cats: boolean;
+  house_trained: boolean;
+  vaccinated: boolean;
+  neutered: boolean;
+  video_path: string | null;
+  bark_audio_path: string | null;
 }
 
 export interface DogPhoto {
@@ -56,6 +79,7 @@ export interface MatchRequest {
   status: RequestStatus;
   created_at: string;
   updated_at: string;
+  match_seen_at: string | null;
 }
 
 export interface Message {
@@ -66,11 +90,14 @@ export interface Message {
   created_at: string;
 }
 
-// Shape returned by the get_swipe_deck() Postgres function:
-// a dog joined with its photos and the owner's display name.
 export interface DeckDog extends Dog {
   photo_paths: string[];
   owner_name: string;
+  shelter_name: string | null;
+  shelter_verified: boolean;
+  is_favorited: boolean;
+  match_score?: number;
+  distance_km?: number | null;
 }
 
 export interface DogWithPhotos extends Dog {

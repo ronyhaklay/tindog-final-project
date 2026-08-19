@@ -7,9 +7,10 @@ import {
   useState,
   useTransition,
 } from "react";
-import { HeartIcon, RotateCcwIcon, XIcon } from "lucide-react";
+import { HeartIcon, RotateCcwIcon, SparklesIcon, XIcon } from "lucide-react";
 import { getDeck, swipe } from "@/actions/swipes";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/components/language-provider";
 import { mergeDeck, removeFromDeck, shouldRefill } from "@/lib/deck";
 import type { DeckDog } from "@/lib/types";
 import type { DeckFilters } from "@/lib/validation";
@@ -28,6 +29,8 @@ export function SwipeDeck({ initialDeck }: { initialDeck: DeckDog[] }) {
   const [drag, setDrag] = useState<{ dx: number; dy: number } | null>(null);
   const [loading, startLoading] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [sentDog, setSentDog] = useState<string | null>(null);
+  const { isHebrew } = useLanguage();
 
   const swipedIds = useRef(new Set<string>());
   const dragStart = useRef<{ x: number; y: number } | null>(null);
@@ -78,7 +81,12 @@ export function SwipeDeck({ initialDeck }: { initialDeck: DeckDog[] }) {
     setFlyout(direction);
 
     const dogId = topDog.id;
+    const dogName = topDog.name;
     swipedIds.current.add(dogId);
+    if (direction === "like") {
+      setSentDog(dogName);
+      window.setTimeout(() => setSentDog(null), 2200);
+    }
 
     // Persist in the background; the UI moves on immediately.
     swipe({ dogId, direction }).then((result) => {
@@ -100,6 +108,11 @@ export function SwipeDeck({ initialDeck }: { initialDeck: DeckDog[] }) {
   // --- pointer drag handling ---
   function onPointerDown(e: React.PointerEvent) {
     if (animating.current) return;
+    const target = e.target as HTMLElement;
+    if (target.closest("[data-no-swipe],a,button,audio,video,input,select,textarea")) {
+      dragStart.current = null;
+      return;
+    }
     dragStart.current = { x: e.clientX, y: e.clientY };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }
@@ -143,7 +156,7 @@ export function SwipeDeck({ initialDeck }: { initialDeck: DeckDog[] }) {
   const passOpacity = Math.min(Math.max(-dx / SWIPE_THRESHOLD_PX, 0), 1);
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
       <DeckFiltersBar filters={filters} onChange={applyFilters} />
 
       {error && (
@@ -152,21 +165,27 @@ export function SwipeDeck({ initialDeck }: { initialDeck: DeckDog[] }) {
         </p>
       )}
 
-      <div className="relative h-[560px] select-none">
+      {sentDog && (
+        <div className="fixed right-4 bottom-5 z-50 flex items-center gap-2 rounded-2xl border border-rose-200 bg-white/95 px-4 py-3 text-sm font-semibold text-rose-950 shadow-xl shadow-rose-200/40 backdrop-blur">
+          <HeartIcon className="size-4 fill-primary text-primary" /> {isHebrew ? `נשלחה התעניינות ב-${sentDog} — העמותה תבדוק את הפרופיל שלך.` : `Interest sent for ${sentDog} — the shelter will review your profile.`}
+        </div>
+      )}
+
+      <div className="relative h-[650px] select-none sm:h-[700px]">
         {deck.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed text-center">
+          <div className="flex h-full flex-col items-center justify-center gap-3 rounded-[28px] border border-dashed bg-white/75 px-6 text-center shadow-sm">
             {loading ? (
-              <p className="text-muted-foreground">Fetching dogs...</p>
+              <p className="text-muted-foreground">{isHebrew ? "מחפשים כלבים..." : "Fetching dogs..."}</p>
             ) : (
               <>
-                <p className="text-lg font-semibold">No more dogs 🐾</p>
+                <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary"><SparklesIcon className="size-6" /></div>
+                <p className="text-xl font-semibold">{isHebrew ? "ראית את כל הכלבים שמתאימים כרגע 🐾" : "You're all caught up 🐾"}</p>
                 <p className="max-w-xs text-sm text-muted-foreground">
-                  You have seen everyone matching these filters. Try changing
-                  the filters or come back later.
+                  {isHebrew ? "כבר ראית את כל הכלבים שתואמים למסננים האלה. אפשר להרחיב את החיפוש או לחזור בקרוב — כלבים חדשים מצטרפים כל הזמן." : "You've seen every dog matching these filters. Widen your search or check back soon for new faces."}
                 </p>
                 <Button variant="outline" onClick={() => refill(filters)}>
                   <RotateCcwIcon data-icon="inline-start" />
-                  Check again
+                  {isHebrew ? "בדיקה מחדש" : "Check again"}
                 </Button>
               </>
             )}
@@ -201,13 +220,13 @@ export function SwipeDeck({ initialDeck }: { initialDeck: DeckDog[] }) {
                         className="absolute top-6 left-4 z-20 -rotate-12 rounded-lg border-4 border-green-500 px-3 py-1 text-2xl font-extrabold text-green-500"
                         style={{ opacity: likeOpacity }}
                       >
-                        LIKE
+                        {isHebrew ? "מתאים לי" : "LIKE"}
                       </span>
                       <span
                         className="absolute top-6 right-4 z-20 rotate-12 rounded-lg border-4 border-red-500 px-3 py-1 text-2xl font-extrabold text-red-500"
                         style={{ opacity: passOpacity }}
                       >
-                        PASS
+                        {isHebrew ? "הלאה" : "PASS"}
                       </span>
                     </>
                   )}
@@ -220,24 +239,27 @@ export function SwipeDeck({ initialDeck }: { initialDeck: DeckDog[] }) {
       </div>
 
       {topDog && (
-        <div className="flex items-center justify-center gap-6">
+        <div className="flex flex-col items-center gap-2 rounded-2xl bg-white/70 py-2 backdrop-blur">
+          <div className="flex items-center justify-center gap-7">
           <Button
             variant="outline"
             size="icon-lg"
-            aria-label="Pass"
-            className="size-14 rounded-full border-red-300 text-red-500 hover:bg-red-50"
+            aria-label={isHebrew ? "הלאה" : "Pass"}
+            className="size-16 rounded-full border-red-200 bg-white text-red-500 shadow-lg shadow-red-100 hover:bg-red-50"
             onClick={() => decide("pass")}
           >
             <XIcon className="size-6" />
           </Button>
           <Button
             size="icon-lg"
-            aria-label="Like"
-            className="size-14 rounded-full"
+            aria-label={isHebrew ? "מתאים לי" : "Like"}
+            className="size-16 rounded-full shadow-lg shadow-rose-200"
             onClick={() => decide("like")}
           >
             <HeartIcon className="size-6" />
           </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">{isHebrew ? "הלאה ← · גררו את הכרטיס · → שליחת התעניינות" : "Pass ← · drag a card · → send interest"}</p>
         </div>
       )}
     </div>

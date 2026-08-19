@@ -18,8 +18,20 @@ function dog(id: string): DeckDog {
     city: "Tel Aviv",
     is_active: true,
     created_at: new Date().toISOString(),
+  gender: "male",
+  good_with_kids: true,
+  good_with_dogs: true,
+  good_with_cats: false,
+  house_trained: true,
+  vaccinated: true,
+  neutered: true,
+    video_path: null,
+    bark_audio_path: null,
     photo_paths: [],
     owner_name: "Owner",
+    shelter_name: "Demo Rescue",
+    shelter_verified: false,
+    is_favorited: false,
   };
 }
 

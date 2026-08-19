@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { DogForm } from "@/components/dogs/dog-form";
 import { createClient } from "@/lib/supabase/server";
 import type { DogWithPhotos } from "@/lib/types";
+import { getLocale } from "@/lib/i18n-server";
 
 export const metadata: Metadata = { title: "Edit dog" };
 
@@ -12,10 +13,14 @@ export default async function EditDogPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const he = (await getLocale()) === "he";
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user!.id).single();
+  if (profile?.role !== "shelter_admin") redirect("/swipe");
 
   const { data: dog } = await supabase
     .from("dogs")
@@ -30,7 +35,8 @@ export default async function EditDogPage({
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="mb-4 text-2xl font-bold">Edit {dog.name}</h1>
+      <p className="text-sm font-medium text-primary">{he ? "עדכון פרסום" : "Update listing"}</p>
+      <h1 className="mb-5 text-3xl font-bold tracking-tight">{he ? "עריכת" : "Edit"} {dog.name}</h1>
       <DogForm dog={dog} />
     </div>
   );

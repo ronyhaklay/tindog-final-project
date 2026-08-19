@@ -46,3 +46,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.env.local
+.env
+node_modules/
+.next/
+.DS_Store
+.tindog-backups/

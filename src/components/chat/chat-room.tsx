@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { ArrowLeftIcon, SendIcon } from "lucide-react";
 import { sendMessage } from "@/actions/messages";
+import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
@@ -31,6 +32,7 @@ export function ChatRoom({
   const [error, setError] = useState<string | null>(null);
   const [sending, startSending] = useTransition();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { locale, isHebrew } = useLanguage();
 
   function appendUnique(message: Message) {
     setMessages((prev) =>
@@ -83,21 +85,21 @@ export function ChatRoom({
   return (
     <div className="mx-auto flex h-[calc(100svh-8.5rem)] max-w-2xl flex-col">
       <div className="flex items-center gap-3 border-b pb-3">
-        <Link href="/matches" aria-label="Back to matches">
+        <Link href="/matches" aria-label={isHebrew ? "חזרה להתאמות" : "Back to matches"}>
           <Button variant="ghost" size="icon">
             <ArrowLeftIcon />
           </Button>
         </Link>
         <div>
           <p className="font-semibold">{otherName}</p>
-          <p className="text-xs text-muted-foreground">about {dogName}</p>
+          <p className="text-xs text-muted-foreground">{isHebrew ? "לגבי" : "about"} {dogName}</p>
         </div>
       </div>
 
       <div className="flex flex-1 flex-col gap-2 overflow-y-auto py-4">
         {messages.length === 0 && (
           <p className="my-auto text-center text-sm text-muted-foreground">
-            Say hi to {otherName} and plan your first meetup with {dogName}!
+            {isHebrew ? `אפשר להגיד שלום ל-${otherName} ולתכנן מפגש ראשון עם ${dogName}!` : `Say hi to ${otherName} and plan your first meetup with ${dogName}!`}
           </p>
         )}
         {messages.map((message) => {
@@ -119,7 +121,7 @@ export function ChatRoom({
                   mine ? "text-primary-foreground/70" : "text-muted-foreground"
                 )}
               >
-                {new Date(message.created_at).toLocaleTimeString([], {
+                {new Date(message.created_at).toLocaleTimeString(locale === "he" ? "he-IL" : "en-US", {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
@@ -140,14 +142,14 @@ export function ChatRoom({
         <Input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder={`Message ${otherName}...`}
+          placeholder={isHebrew ? `הודעה ל-${otherName}...` : `Message ${otherName}...`}
           maxLength={2000}
-          aria-label="Message"
+          aria-label={isHebrew ? "הודעה" : "Message"}
         />
         <Button
           type="submit"
           size="icon"
-          aria-label="Send"
+          aria-label={isHebrew ? "שליחה" : "Send"}
           disabled={sending || draft.trim().length === 0}
         >
           <SendIcon />

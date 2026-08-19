@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import { ImagePlusIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/components/language-provider";
 import {
   MAX_PHOTOS_PER_DOG,
   MAX_PHOTO_SIZE_BYTES,
@@ -24,6 +25,7 @@ export function PhotoUploader({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { isHebrew } = useLanguage();
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -33,16 +35,16 @@ export function PhotoUploader({
     const selected = Array.from(files).slice(0, remaining);
 
     if (files.length > remaining) {
-      setError(`You can upload up to ${MAX_PHOTOS_PER_DOG} photos.`);
+      setError(isHebrew ? `אפשר להעלות עד ${MAX_PHOTOS_PER_DOG} תמונות.` : `You can upload up to ${MAX_PHOTOS_PER_DOG} photos.`);
     }
 
     for (const file of selected) {
       if (!file.type.startsWith("image/")) {
-        setError("Only image files are allowed.");
+        setError(isHebrew ? "אפשר להעלות קבצי תמונה בלבד." : "Only image files are allowed.");
         return;
       }
       if (file.size > MAX_PHOTO_SIZE_BYTES) {
-        setError("Each photo must be at most 4MB.");
+        setError(isHebrew ? "כל תמונה יכולה להיות עד 5MB." : "Each photo must be at most 5MB.");
         return;
       }
     }
@@ -54,7 +56,7 @@ export function PhotoUploader({
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        setError("You must be logged in to upload photos.");
+        setError(isHebrew ? "צריך להתחבר כדי להעלות תמונות." : "You must be logged in to upload photos.");
         return;
       }
 
@@ -66,7 +68,7 @@ export function PhotoUploader({
           .from(STORAGE_BUCKET)
           .upload(path, file, { contentType: file.type });
         if (uploadError) {
-          setError("Upload failed. Please try again.");
+          setError(isHebrew ? "ההעלאה נכשלה. נסו שוב." : "Upload failed. Please try again.");
           return;
         }
         uploaded.push(path);
@@ -92,7 +94,7 @@ export function PhotoUploader({
           <div key={path} className="group relative aspect-square">
             <Image
               src={publicPhotoUrl(path)}
-              alt="Dog photo"
+              alt={isHebrew ? "תמונת כלב" : "Dog photo"}
               fill
               sizes="120px"
               className="rounded-lg object-cover"
@@ -100,7 +102,7 @@ export function PhotoUploader({
             <button
               type="button"
               onClick={() => removePhoto(path)}
-              aria-label="Remove photo"
+              aria-label={isHebrew ? "הסרת תמונה" : "Remove photo"}
               className="absolute top-1 right-1 rounded-md bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
             >
               <Trash2Icon className="size-3.5" />
@@ -116,7 +118,7 @@ export function PhotoUploader({
             className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
           >
             <ImagePlusIcon className="size-5" />
-            <span className="text-xs">{uploading ? "Uploading..." : "Add"}</span>
+            <span className="text-xs">{uploading ? (isHebrew ? "מעלה..." : "Uploading...") : (isHebrew ? "הוספה" : "Add")}</span>
           </button>
         )}
       </div>
@@ -132,12 +134,11 @@ export function PhotoUploader({
 
       {error && <p className="text-sm text-destructive">{error}</p>}
       <p className="text-xs text-muted-foreground">
-        Up to {MAX_PHOTOS_PER_DOG} photos, 4MB each. The first photo is the
-        cover.
+        {isHebrew ? `עד ${MAX_PHOTOS_PER_DOG} תמונות, עד 5MB לכל תמונה. התמונה הראשונה תהיה תמונת הקאבר.` : `Up to ${MAX_PHOTOS_PER_DOG} photos, 5MB each. The first photo is the cover.`}
       </p>
       {uploading && (
         <Button type="button" variant="ghost" size="sm" disabled>
-          Uploading...
+          {isHebrew ? "מעלה..." : "Uploading..."}
         </Button>
       )}
     </div>

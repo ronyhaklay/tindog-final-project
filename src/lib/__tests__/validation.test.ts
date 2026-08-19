@@ -13,11 +13,18 @@ const validDog = {
   ageYears: "3",
   size: "medium",
   energyLevel: "high",
+  gender: "male",
   temperament: "Playful",
   specialNeeds: "",
   description: "A very good boy",
   listingType: "adoption",
   city: "Tel Aviv",
+  goodWithKids: true,
+  goodWithDogs: true,
+  goodWithCats: false,
+  houseTrained: true,
+  vaccinated: true,
+  neutered: true,
   isActive: true,
 };
 
@@ -27,6 +34,7 @@ describe("signupSchema", () => {
       displayName: "Maya Levi",
       email: "maya@example.com",
       password: "supersecret1",
+      role: "adopter",
     });
     expect(result.success).toBe(true);
   });
@@ -45,6 +53,7 @@ describe("signupSchema", () => {
       displayName: "Maya",
       email: "not-an-email",
       password: "supersecret1",
+      role: "adopter",
     });
     expect(result.success).toBe(false);
   });
@@ -54,6 +63,7 @@ describe("signupSchema", () => {
       displayName: "M",
       email: "maya@example.com",
       password: "supersecret1",
+      role: "adopter",
     });
     expect(result.success).toBe(false);
   });

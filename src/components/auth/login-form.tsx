@@ -7,19 +7,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FormError } from "./form-error";
+import { useLanguage } from "@/components/language-provider";
 
 export function LoginForm() {
   const [state, formAction, pending] = useActionState(login, null);
+  const { isHebrew } = useLanguage();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Welcome back</CardTitle>
+        <CardTitle className="text-lg">{isHebrew ? "ברוכים השבים" : "Welcome back"}</CardTitle>
       </CardHeader>
       <CardContent>
         <form action={formAction} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{isHebrew ? "אימייל" : "Email"}</Label>
             <Input
               id="email"
               name="email"
@@ -30,7 +32,7 @@ export function LoginForm() {
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{isHebrew ? "סיסמה" : "Password"}</Label>
             <Input
               id="password"
               name="password"
@@ -41,7 +43,7 @@ export function LoginForm() {
           </div>
           <FormError state={state} />
           <Button type="submit" disabled={pending}>
-            {pending ? "Logging in..." : "Log in"}
+            {pending ? (isHebrew ? "מתחברים..." : "Logging in...") : (isHebrew ? "התחברות" : "Log in")}
           </Button>
         </form>
       </CardContent>
