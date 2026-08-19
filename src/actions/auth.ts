@@ -12,7 +12,7 @@ export async function signup(_prev: ActionResult | null, formData: FormData): Pr
     email: formData.get("email"),
     password: formData.get("password"),
     role: formData.get("role"),
-    shelterName: formData.get("shelterName"),
+    shelterName: formData.get("shelterName") ?? "",
   });
   if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
 
