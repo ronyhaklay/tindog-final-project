@@ -3,8 +3,6 @@ import { Geist, Geist_Mono, Varela_Round } from "next/font/google";
 import { LanguageProvider } from "@/components/language-provider";
 import { getLocale } from "@/lib/i18n-server";
 import "./globals.css";
-import { BackgroundMusic } from "@/components/background-music";
-
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
@@ -26,7 +24,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang={locale} dir={locale === "he" ? "rtl" : "ltr"} className={`${geistSans.variable} ${geistMono.variable} ${varelaRound.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <BackgroundMusic />
         <LanguageProvider initialLocale={locale}>{children}</LanguageProvider>
       </body>
     </html>

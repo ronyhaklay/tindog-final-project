@@ -17,10 +17,12 @@ export async function signup(_prev: ActionResult | null, formData: FormData): Pr
   if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
 
   const supabase = await createClient();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
+      emailRedirectTo: siteUrl ? `${siteUrl}/auth/callback` : undefined,
       data: {
         display_name: parsed.data.displayName,
         role: parsed.data.role,
@@ -30,7 +32,10 @@ export async function signup(_prev: ActionResult | null, formData: FormData): Pr
   });
 
   if (error) return { ok: false, error: error.message };
-  if (!data.session) return { ok: false, error: "Check your email to confirm your account, then log in." };
+  if (!data.session) {
+    const email = encodeURIComponent(parsed.data.email);
+    redirect(`/verify-email?email=${email}`);
+  }
   redirect(parsed.data.role === "shelter_admin" ? "/shelter" : "/swipe");
 }
 
@@ -58,7 +63,7 @@ export async function updateProfile(_prev: ActionResult | null, formData: FormDa
     displayName: formData.get("displayName"),
     city: formData.get("city"),
     bio: formData.get("bio"),
-    shelterName: formData.get("shelterName"),
+    shelterName: formData.get("shelterName") ?? "",
     shelterAbout: formData.get("shelterAbout"),
     shelterWebsite: formData.get("shelterWebsite"),
     householdType: formData.get("householdType"),
