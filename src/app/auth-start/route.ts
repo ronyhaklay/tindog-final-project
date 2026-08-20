@@ -9,9 +9,9 @@ export async function GET(request: NextRequest) {
 
   const target =
     intent === "lister"
-      ? "/signup?mode=lister"
+      ? "/signup?role=shelter_admin"
       : intent === "adopter"
-        ? "/signup?mode=adopter"
+        ? "/signup?role=adopter"
         : "/login";
 
   return NextResponse.redirect(new URL(target, request.url));

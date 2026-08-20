@@ -30,7 +30,7 @@ export default async function VerifyEmailPage({
         <div className="relative">
           <div className="mx-auto mb-3 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-bold text-emerald-700">
             <BadgeCheckIcon className="size-4" />
-            {he ? "ההרשמה הושלמה בהצלחה" : "Registration completed"}
+            {he ? "נשלח אימות במייל — מחכה לאישורך" : "Verification email sent — waiting for your approval"}
           </div>
 
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-950 md:text-4xl">

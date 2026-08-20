@@ -189,7 +189,7 @@ export default async function LandingPage() {
           </p>
 
           <div className="mt-5 flex flex-wrap gap-3">
-            <Link href="/auth-start?intent=adopter">
+            <Link href="/signup?role=adopter">
               <Button
                 size="lg"
                 className="h-12 border border-[#2F6654]/30 bg-[#4F8B73] pl-7 pr-5 font-bold text-white shadow-sm hover:bg-[#447B66] justify-center text-center"
@@ -198,7 +198,7 @@ export default async function LandingPage() {
                 <span className={he ? "relative translate-x-1.5" : ""}>{he ? "להכיר כלבים לאימוץ" : "Meet adoptable dogs"}</span>
               </Button>
             </Link>
-            <Link href="/auth-start?intent=lister">
+            <Link href="/signup?role=shelter_admin">
               <Button size="lg" className="h-12 border border-emerald-950/25 bg-emerald-900 pl-7 pr-5 font-bold text-white shadow-sm hover:bg-emerald-800 justify-center text-center">
                 <Building2Icon data-icon="inline-start" />
                 <span className={he ? "relative translate-x-1.5" : ""}>{he ? "אני מעמותה" : "I'm a shelter"}</span>
