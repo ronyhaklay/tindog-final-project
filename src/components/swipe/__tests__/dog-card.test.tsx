@@ -1,5 +1,29 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+  }),
+  usePathname: () => "/swipe",
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+
+vi.mock("@/components/language-provider", () => ({
+  useLanguage: () => ({
+    locale: "en",
+    isHebrew: false,
+    setLocale: vi.fn(),
+    toggleLocale: vi.fn(),
+  }),
+}));
+
 import type { DeckDog } from "@/lib/types";
 
 vi.mock("@/actions/favorites", () => ({

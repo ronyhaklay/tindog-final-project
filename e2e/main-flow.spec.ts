@@ -1,156 +1,242 @@
 import { expect, test, type Page } from "@playwright/test";
 
-// The core business flow, end to end, with two real users:
-//   1. Owner signs up and publishes a dog for adoption.
-//   2. Adopter signs up, finds the dog in the swipe deck and likes it.
-//   3. Owner sees the request and approves it.
-//   4. Both sides chat through the realtime chat.
-//
-// Requires a running Supabase (e.g. `npx supabase start`) with the
-// migration applied and email confirmation disabled.
+/**
+ * TinDog's current core business flow.
+ *
+ * These E2E tests deliberately use the seeded demo accounts instead of creating
+ * a new account on every run. Production signup requires email verification,
+ * which would make the core flow depend on an external email delivery step.
+ *
+ * Required demo accounts:
+ *   maya@demo.tindog.app / Demo1234!  -> shelter_admin
+ *   alex@demo.tindog.app / Demo1234!  -> adopter
+ *
+ * The tests work with the current Hebrew-first UI by forcing English only for
+ * the browser test session. Selectors rely mainly on ids, aria labels and
+ * semantic roles rather than translated visible copy.
+ */
 
 const runId = Date.now();
-const owner = {
-  email: `owner-${runId}@e2e.tindog.app`,
-  password: "E2ePassword1!",
-  name: "E2E Owner",
+
+const shelter = {
+  email: "maya@demo.tindog.app",
+  password: "Demo1234!",
 };
+
 const adopter = {
-  email: `adopter-${runId}@e2e.tindog.app`,
-  password: "E2ePassword1!",
-  name: "E2E Adopter",
+  email: "alex@demo.tindog.app",
+  password: "Demo1234!",
 };
-const dogName = `Bolt-${runId}`;
+
+const dogName = `E2E-Bolt-${runId}`;
 const city = `E2ECity${runId}`;
 
-async function signup(
-  page: Page,
-  user: { email: string; password: string; name: string }
-) {
-  await page.goto("/signup");
-  await page.getByLabel("Your name").fill(user.name);
-  await page.getByLabel("Email").fill(user.email);
-  await page.getByLabel("Password").fill(user.password);
-  await page.getByRole("button", { name: "Sign up" }).click();
-  await page.waitForURL("**/swipe");
-}
-
-async function logout(page: Page) {
-  await page.getByRole("button", { name: "Log out" }).click();
-  await page.waitForURL("**/login");
+async function useEnglish(page: Page) {
+  // Set the locale on whichever origin Playwright is currently testing.
+  await page.goto("/");
+  await page.evaluate(() => {
+    document.cookie =
+      "tindog_locale=en; Path=/; Max-Age=3600; SameSite=Lax";
+  });
 }
 
 async function login(
   page: Page,
-  user: { email: string; password: string }
+  user: { email: string; password: string },
 ) {
   await page.goto("/login");
-  await page.getByLabel("Email").fill(user.email);
-  await page.getByLabel("Password").fill(user.password);
-  await page.getByRole("button", { name: "Log in" }).click();
-  await page.waitForURL("**/swipe");
+  await page.locator("#email").fill(user.email);
+  await page.locator("#password").fill(user.password);
+  await page
+    .locator('form:has(#email) button[type="submit"]')
+    .click();
+
+  await page.waitForURL(/\/(shelter|swipe|profile)(?:[/?]|$)/, {
+    timeout: 15_000,
+  });
 }
 
-test.describe.serial("main business flow", () => {
-  test("owner signs up and publishes a dog", async ({ page }) => {
-    await signup(page, owner);
+async function logout(page: Page) {
+  await page.getByRole("button", { name: "Log out" }).click();
+  await page.waitForURL(/\/login(?:[/?]|$)/);
+}
 
-    await page.goto("/dogs/new");
-    await page.getByLabel("Name").fill(dogName);
-    await page.getByLabel("Breed").fill("Border Collie");
-    await page.getByLabel("Age (years)").fill("2");
-    await page.getByLabel("Looking for").selectOption("adoption");
-    await page.getByLabel("City").fill(city);
-    await page
-      .getByLabel("Story")
-      .fill("E2E test dog looking for a loving home.");
-    await page.getByRole("button", { name: "Create dog profile" }).click();
+async function completeAdopterProfile(page: Page) {
+  await page.goto("/profile");
 
-    await page.waitForURL("**/dogs");
-    await expect(page.getByText(dogName)).toBeVisible();
+  await page.locator("#displayName").fill("Alex E2E Adopter");
+  await page.locator("#city").fill(city);
+  await page
+    .locator("#bio")
+    .fill("E2E adopter profile used to verify the complete adoption flow.");
 
-    await logout(page);
+  await page.locator("#accountMode").selectOption("adopter");
+  await page.locator("#householdType").selectOption("apartment");
+  await page.locator("#dogExperience").selectOption("some");
+  await page.locator("#activityLevel").selectOption("medium");
+  await page.locator("#preferredSize").selectOption("medium");
+  await page.locator("#hasChildren").selectOption("no");
+  await page.locator("#hasOtherPets").selectOption("no");
+
+  await page
+    .locator('form:has(#displayName) button[type="submit"]')
+    .click();
+
+  await expect(
+    page.getByText("Profile complete. You can now open Discover."),
+  ).toBeVisible({ timeout: 10_000 });
+
+  await page.goto("/swipe");
+  await expect(page).toHaveURL(/\/swipe(?:[/?]|$)/);
+}
+
+test.describe.serial("TinDog current business flow", () => {
+  test.beforeEach(async ({ page }) => {
+    await useEnglish(page);
   });
 
-  test("adopter finds the dog and swipes right", async ({ page }) => {
-    await signup(page, adopter);
+  test("protects private pages and routes a shelter to its dashboard", async ({
+    page,
+  }) => {
+    await page.goto("/swipe");
+    await page.waitForURL(/\/login(?:[/?]|$)/);
 
-    // Filter by the unique test city so the deck shows our dog on top.
-    await page.getByLabel("City").fill(city);
+    await login(page, shelter);
+    await expect(page).toHaveURL(/\/shelter(?:[/?]|$)/);
+
+    // A shelter manager must not use the adopter discovery deck.
+    await page.goto("/swipe");
+    await expect(page).toHaveURL(/\/shelter(?:[/?]|$)/);
+  });
+
+  test("shelter publishes a dog", async ({ page }) => {
+    await login(page, shelter);
+    await page.goto("/dogs/new");
+
+    await page.locator("#name").fill(dogName);
+    await page.locator("#breed").fill("Border Collie");
+    await page.locator("#ageYears").fill("2");
+    await page.locator("#listingType").selectOption("adoption");
+    await page.locator("#city").fill(city);
+    await page
+      .locator("#description")
+      .fill("E2E test dog looking for a loving adoptive home.");
+
+    await page
+      .locator('form:has(#name) button[type="submit"]')
+      .click();
+
+    await page.waitForURL(/\/dogs(?:[/?]|$)/, { timeout: 15_000 });
+    await expect(page.getByText(dogName, { exact: false })).toBeVisible();
+  });
+
+  test("adopter completes the required profile and sends interest", async ({
+    page,
+  }) => {
+    await login(page, adopter);
+    await completeAdopterProfile(page);
+
+    const cityFilter = page.locator('input[aria-label="City"]');
+    await cityFilter.fill(city);
     await page.getByRole("button", { name: "Search" }).click();
 
-    await expect(page.getByText(dogName)).toBeVisible();
+    await expect(page.getByText(dogName, { exact: false })).toBeVisible({
+      timeout: 10_000,
+    });
+
     await page.getByRole("button", { name: "Like" }).click();
 
-    // Deck should now be empty for this filter.
-    await expect(page.getByText("No more dogs 🐾")).toBeVisible();
+    await expect(
+      page.getByText(`Interest sent for ${dogName}`, { exact: false }),
+    ).toBeVisible();
 
-    await logout(page);
+    // The next shelter-side test verifies that the request was actually persisted.
+    // Do not assert that there are zero [role="alert"] elements here: the UI may
+    // correctly render its success/status message as an accessible alert.
+    await page.waitForTimeout(1200);
   });
 
-  test("rejects invalid dog input", async ({ page }) => {
-    await login(page, owner);
-
+  test("rejects invalid dog input on the server", async ({ page }) => {
+    await login(page, shelter);
     await page.goto("/dogs/new");
-    // Whitespace-only name passes the browser's native `required`
-    // check but must be rejected by the server-side Zod validation.
-    await page.getByLabel("Name").fill("   ");
-    await page.getByLabel("Age (years)").fill("2");
-    await page.getByLabel("City").fill(city);
-    await page.getByRole("button", { name: "Create dog profile" }).click();
+
+    // Whitespace passes the browser's required check but must fail Zod.
+    await page.locator("#name").fill("   ");
+    await page.locator("#ageYears").fill("2");
+    await page.locator("#city").fill(city);
+
+    await page
+      .locator('form:has(#name) button[type="submit"]')
+      .click();
 
     await expect(page.getByText("Dog name is required")).toBeVisible();
-    await logout(page);
   });
 
-  test("owner approves the request", async ({ page }) => {
-    await login(page, owner);
-
+  test("shelter approves the adopter request and creates a match", async ({
+    page,
+  }) => {
+    await login(page, shelter);
     await page.goto("/requests");
-    await expect(page.getByText(adopter.name)).toBeVisible();
-    await page.getByRole("button", { name: /Approve/ }).click();
 
-    // Request disappears from the pending list...
-    await expect(page.getByText("No pending requests")).toBeVisible();
+    const requestCard = page
+      .locator('[data-slot="card"]')
+      .filter({ hasText: dogName });
 
-    // ...and shows up as a match.
+    await expect(requestCard).toBeVisible({ timeout: 10_000 });
+
+    await requestCard
+      .getByRole("button", { name: "Approve & open chat" })
+      .click();
+
+    // Verify the business result, not just the button click.
+    await page.waitForTimeout(700);
     await page.goto("/matches");
-    await expect(page.getByText(adopter.name)).toBeVisible();
 
-    await logout(page);
+    const matchCard = page
+      .locator('[data-slot="card"]')
+      .filter({ hasText: dogName });
+
+    await expect(matchCard).toBeVisible({ timeout: 10_000 });
   });
 
-  test("both sides can chat", async ({ page }) => {
-    await login(page, adopter);
-
-    await page.goto("/matches");
-    await page.getByText(owner.name).click();
-
+  test("approved adopter and shelter can chat", async ({ page }) => {
     const greeting = `Hi! I would love to adopt ${dogName}`;
+    const reply = `Great! Let's arrange a meeting for ${dogName}.`;
+
+    await login(page, adopter);
+    await page.goto("/matches");
+
+    const adopterMatchCard = page
+      .locator('[data-slot="card"]')
+      .filter({ hasText: dogName });
+
+    await expect(adopterMatchCard).toBeVisible({ timeout: 10_000 });
+    await adopterMatchCard.click();
+    await page.waitForURL(/\/matches\/[^/]+$/);
+
     await page.getByLabel("Message").fill(greeting);
     await page.getByRole("button", { name: "Send" }).click();
     await expect(page.getByText(greeting)).toBeVisible();
 
     await logout(page);
 
-    // The owner sees the message and replies.
-    await login(page, owner);
+    await login(page, shelter);
     await page.goto("/matches");
-    await page.getByText(adopter.name).click();
 
-    await expect(page.getByText(greeting)).toBeVisible();
+    const shelterMatchCard = page
+      .locator('[data-slot="card"]')
+      .filter({ hasText: dogName });
 
-    const reply = "Amazing! When can you meet?";
+    await expect(shelterMatchCard).toBeVisible({ timeout: 10_000 });
+    await shelterMatchCard.click();
+    await page.waitForURL(/\/matches\/[^/]+$/);
+
+    await expect(page.getByText(greeting)).toBeVisible({
+      timeout: 10_000,
+    });
+
     await page.getByLabel("Message").fill(reply);
     await page.getByRole("button", { name: "Send" }).click();
     await expect(page.getByText(reply)).toBeVisible();
-  });
-
-  test("unauthenticated users are redirected to login", async ({ browser }) => {
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    await page.goto("/swipe");
-    await page.waitForURL("**/login?next=%2Fswipe");
-    await context.close();
   });
 });

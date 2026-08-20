@@ -1,6 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/components/language-provider", () => ({
+  useLanguage: () => ({
+    locale: "en",
+    isHebrew: false,
+    setLocale: vi.fn(),
+    toggleLocale: vi.fn(),
+  }),
+}));
+
 import { RequestCard } from "../request-card";
 
 vi.mock("@/actions/requests", () => ({
